@@ -8,24 +8,41 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class NamespaceLockService {
 
-  private final NamespaceLockRepository namespaceLockRepository;
+    private final NamespaceLockRepository namespaceLockRepository;
 
-  public NamespaceLockService(final NamespaceLockRepository namespaceLockRepository) {
-    this.namespaceLockRepository = namespaceLockRepository;
-  }
+    public NamespaceLockService(final NamespaceLockRepository namespaceLockRepository) {
+        this.namespaceLockRepository = namespaceLockRepository;
+    }
 
-  public NamespaceLock findLock(Long namespaceId){
-    return namespaceLockRepository.findByNamespaceId(namespaceId);
-  }
+    /**
+     * 查询是否有锁定namespace
+     *
+     * @param namespaceId
+     * @return
+     */
+    public NamespaceLock findLock(Long namespaceId) {
+        return namespaceLockRepository.findByNamespaceId(namespaceId);
+    }
 
+    /**
+     * 给某个namespace加锁
+     *
+     * @param lock
+     * @return
+     */
+    @Transactional
+    public NamespaceLock tryLock(NamespaceLock lock) {
+        return namespaceLockRepository.save(lock);
+    }
 
-  @Transactional
-  public NamespaceLock tryLock(NamespaceLock lock){
-    return namespaceLockRepository.save(lock);
-  }
-
-  @Transactional
-  public void unlock(Long namespaceId){
-    namespaceLockRepository.deleteByNamespaceId(namespaceId);
-  }
+    /**
+     * 给某个namespace解锁
+     *
+     * @param namespaceId
+     * @return
+     */
+    @Transactional
+    public void unlock(Long namespaceId) {
+        namespaceLockRepository.deleteByNamespaceId(namespaceId);
+    }
 }

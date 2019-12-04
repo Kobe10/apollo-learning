@@ -6,6 +6,9 @@ import com.ctrip.framework.apollo.common.entity.App;
 
 import org.springframework.context.ApplicationEvent;
 
+/**
+ * 事件处理必须继承相应的类  ApplicationEvent
+ */
 public class AppCreationEvent extends ApplicationEvent {
 
   public AppCreationEvent(Object source) {
