@@ -16,14 +16,7 @@ import com.ctrip.framework.apollo.core.utils.ApolloThreadFactory;
 import com.ctrip.framework.apollo.tracer.Tracer;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
-import com.google.common.collect.Ordering;
-import com.google.common.collect.Sets;
-import com.google.common.collect.TreeMultimap;
+import com.google.common.collect.*;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
@@ -38,11 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 
 import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -312,7 +301,7 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
         if (!Topics.APOLLO_RELEASE_TOPIC.equals(channel) || Strings.isNullOrEmpty(content)) {
             return;
         }
-
+        // 获得对应的 Namespace 的名字
         String changedNamespace = retrieveNamespaceFromReleaseMessage.apply(content);
 
         if (Strings.isNullOrEmpty(changedNamespace)) {
@@ -325,17 +314,21 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
         }
 
         //create a new list to avoid ConcurrentModificationException
+        // 创建 DeferredResultWrapper 数组，避免并发问题。
         List<DeferredResultWrapper> results = Lists.newArrayList(deferredResults.get(content));
 
         ApolloConfigNotification configNotification = new ApolloConfigNotification(changedNamespace, message.getId());
         configNotification.addMessage(content, message.getId());
 
         //do async notification if too many clients
+        // 若需要通知的客户端过多，使用 ExecutorService 异步通知，避免“惊群效应”
+        // 假设一个公共 Namespace 有10W 台机器使用，如果该公共 Namespace 发布时直接下发配置更新消息的话，就会导致这 10W 台机器一下子都来请求配置，这动静就有点大了，而且对 Config Service 的压力也会比较大。
         if (results.size() > bizConfig.releaseMessageNotificationBatch()) {
             largeNotificationBatchExecutorService.submit(() -> {
                 logger.debug("Async notify {} clients for key {} with batch {}", results.size(), content,
                         bizConfig.releaseMessageNotificationBatch());
                 for (int i = 0; i < results.size(); i++) {
+                    // 每 N 个客户端，sleep 一段时间。
                     if (i > 0 && i % bizConfig.releaseMessageNotificationBatch() == 0) {
                         try {
                             TimeUnit.MILLISECONDS.sleep(bizConfig.releaseMessageNotificationBatchIntervalInMilli());

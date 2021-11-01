@@ -18,12 +18,16 @@ import com.google.common.base.Preconditions;
  *
  * @author Jason Song(song_s@ctrip.com)
  */
-public enum Env{
-  LOCAL, DEV, FWS, FAT, UAT, LPT, PRO, TOOLS, UNKNOWN;
 
-  public static Env fromString(String env) {
-    Env environment = EnvUtils.transformEnv(env);
-    Preconditions.checkArgument(environment != UNKNOWN, String.format("Env %s is invalid", env));
-    return environment;
-  }
+/**
+ * 环境枚举：前面一直忘记对 Env 介绍，所以有些奇怪的放在这个位置。主要目的是，我们可以参考携程对服务环境的命名和定义。
+ */
+public enum Env {
+    LOCAL, DEV, FWS, FAT, UAT, LPT, PRO, TOOLS, UNKNOWN;
+
+    public static Env fromString(String env) {
+        Env environment = EnvUtils.transformEnv(env);
+        Preconditions.checkArgument(environment != UNKNOWN, String.format("Env %s is invalid", env));
+        return environment;
+    }
 }

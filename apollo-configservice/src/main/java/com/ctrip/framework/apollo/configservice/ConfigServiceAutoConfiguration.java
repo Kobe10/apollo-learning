@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 
 /**
  * @author Jason Song(song_s@ctrip.com)
+ * configservice的自动配置 默认加载该配置类---所有配置监听类都在这注册
  */
 @Configuration
 public class ConfigServiceAutoConfiguration {
@@ -31,11 +32,14 @@ public class ConfigServiceAutoConfiguration {
         return new GrayReleaseRulesHolder();
     }
 
+    // 开启缓存，使用 ConfigServiceWithCache
     @Bean
     public ConfigService configService() {
+        // 开启缓存，使用 ConfigServiceWithCache   通过该配置：config-service.cache.enabled
         if (bizConfig.isConfigServiceCacheEnabled()) {
             return new ConfigServiceWithCache();
         }
+        // 不开启缓存，使用 DefaultConfigService
         return new DefaultConfigService();
     }
 
